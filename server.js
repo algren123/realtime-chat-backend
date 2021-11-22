@@ -57,7 +57,7 @@ const resolvers = {
 const pubsub = new PubSub();
 
 const options = {
-  port: 8000,
+  port: 4000,
   endpoint: '/graphql',
   subscriptions: '/subscriptions',
   playground: '/playground',
