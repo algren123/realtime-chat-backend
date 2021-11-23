@@ -1,6 +1,6 @@
 const { GraphQLServer, PubSub } = require('graphql-yoga');
 
-const messages = [];
+let messages = [];
 
 const typeDefs = `
 type Message {
@@ -9,12 +9,20 @@ type Message {
     content: String!
     picture: String!
     name: String!
+    date: String!
+    time: String!
   }
   type Query {
     messages: [Message!]
   }
   type Mutation {
     postMessage(user: String!, content: String!, picture: String!, name: String!): ID!
+    deleteMessage(id: ID!): ID!
+    deleteAllMessages: Response!
+  }
+  type Response {
+    success: Boolean!
+    message: String!
   }
   type Subscription {
     messages: [Message!]
@@ -29,17 +37,38 @@ const resolvers = {
     messages: () => messages,
   },
   Mutation: {
-    postMessage: (parent, { user, content, picture, name }) => {
+    postMessage: (_, { user, content, picture, name }) => {
       const id = messages.length;
+      const date = new Date().toLocaleDateString();
+      const time = new Date().toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
       messages.push({
         id,
         user,
         content,
         picture,
         name,
+        date,
+        time,
       });
       subscribers.forEach((fn) => fn());
       return id;
+    },
+    deleteMessage: (_, { id }) => {
+      const ID = parseInt(id);
+      messages = messages.filter((chat) => chat.id !== ID);
+      subscribers.forEach((fn) => fn());
+      return id;
+    },
+    deleteAllMessages: (_) => {
+      messages = [];
+      subscribers.forEach((fn) => fn());
+      return {
+        success: true,
+        message: 'Messages deleted',
+      };
     },
   },
   Subscription: {
